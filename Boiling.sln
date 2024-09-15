@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boiling", "Boiling\Boiling.csproj", "{9065D3AC-547E-4C5C-80D6-9DE8F010EC1C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpMath", "..\..\source\repos\C#\Projects\SharpMath\SharpMath\SharpMath.csproj", "{9CB6E5C4-3D37-464B-9A2F-B85C48097FF9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9065D3AC-547E-4C5C-80D6-9DE8F010EC1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9065D3AC-547E-4C5C-80D6-9DE8F010EC1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9065D3AC-547E-4C5C-80D6-9DE8F010EC1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9065D3AC-547E-4C5C-80D6-9DE8F010EC1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CB6E5C4-3D37-464B-9A2F-B85C48097FF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CB6E5C4-3D37-464B-9A2F-B85C48097FF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CB6E5C4-3D37-464B-9A2F-B85C48097FF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CB6E5C4-3D37-464B-9A2F-B85C48097FF9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
