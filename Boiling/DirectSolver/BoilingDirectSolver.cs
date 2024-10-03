@@ -1,9 +1,11 @@
 ﻿using Boiling.FiniteElement;
 using Boiling.FiniteElement._2D;
 using Boiling.FiniteElement._2D.Assembling;
+using Boiling.FiniteElement.Time;
 using SharpMath;
 using SharpMath.Computations.Integration;
 using SharpMath.EquationsSystem.Solver;
+using SharpMath.FiniteElement;
 using SharpMath.FiniteElement._2D;
 using SharpMath.FiniteElement._2D.Assembling;
 using SharpMath.FiniteElement._2D.BasisFunctions;
@@ -58,7 +60,7 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
         _context.TimeSolutions = new Vector[param.Length];
     }
 
-    public Vector[] Solve(Vector initialSolution)
+    public TimeFiniteElementSolution2D Solve(Vector initialSolution)
     {
         _context.TimeSolutions[0] = initialSolution;
 
@@ -74,7 +76,7 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
             _context.TimeSolutions[_currentTimeLayer] = _context.Equation.Solution;
         }
 
-        return _context.TimeSolutions;
+        return new TimeFiniteElementSolution2D(new BilinearBasisFunctionsProvider(_context), _context.Grid, _context.TimeSolutions, _context.TimeLayers);
     }
 
     private BoilingContext<Point, Element, SparseMatrix> CreateContext(Grid<Point, Element> grid)

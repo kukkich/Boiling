@@ -1,10 +1,12 @@
 ﻿using Boiling.DirectSolver;
+using Boiling.FiniteElement.Time;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using SharpMath.EquationsSystem.Preconditions;
 using SharpMath.EquationsSystem.Solver;
+using SharpMath.FiniteElement;
 using SharpMath.FiniteElement._2D.Parameters;
 using SharpMath.FiniteElement.Materials.Boiling;
 using SharpMath.FiniteElement.Materials.HarmonicWithoutChi;
@@ -101,7 +103,7 @@ void RunBoiling()
         .EnumerateValues(new Interval(0d, 2d))
         .ToArray());
 
-    var solutions = solver.Solve(new Vector(new double[grid.Nodes.TotalPoints]));
+    var femSolution = solver.Solve(new Vector(new double[grid.Nodes.TotalPoints]));
 }
 
 RunBoiling();
