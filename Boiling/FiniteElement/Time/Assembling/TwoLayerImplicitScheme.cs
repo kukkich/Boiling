@@ -21,6 +21,7 @@ public class TwoLayerImplicitScheme
 
     public Equation<SparseMatrix> UseScheme(Vector previousSolution, double currentTime, double previousTime)
     {
+        _bufferVector.Nullify();
         var delta01 = currentTime - previousTime;
 
         LinAl.Multiply(1 / delta01, _massMatrix, _bufferMatrix);

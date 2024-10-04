@@ -69,8 +69,8 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
         {
             _assembler
                 .BuildEquation(PreviousSolution, CurrentTime, PreviousTime)
-                .ApplySecondBoundary(_context)
-                .ApplyThirdBoundary(_context);
+                .ApplySecondBoundary(_context);
+     //           .ApplyThirdBoundary(_context);
 
             _slaeSolver.Solve(_context.Equation);
 
@@ -107,7 +107,7 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
     private SecondCondition[] CreateSecond(Grid<Point, Element> grid)
     {
         var panRadius = grid.Nodes[grid.Nodes.XLength - 1].R();
-        var theta = 1000 / (Math.PI * panRadius * panRadius);
+        var theta = 2000d / (Math.PI * panRadius * panRadius);
         return EnumerateBottomElementsIndexes(grid)
             .Select(elementIndex => new SecondCondition(elementIndex, Bound.Bottom, [theta, theta], ComponentType.Real))
             .ToArray();
@@ -164,8 +164,8 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
             new VelocityMatrixLocalAssembler(
                 context,
                 _materials,
-                new ConvectionVelocity(context.Grid.Nodes, 1),
-                new DoubleIntegration(GaussMethodConfig.UseGaussMethodTwo(512)),
+                new ConvectionVelocity(context.Grid.Nodes, 0.02),
+                new DoubleIntegration(GaussMethodConfig.UseGaussMethodTwo(1)),
                 new BilinearBasisFunctionsProvider(context)
             ),
             inserter,

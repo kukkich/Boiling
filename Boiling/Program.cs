@@ -36,11 +36,13 @@ void ConfigureServices(IServiceCollection services)
 
         return losConfig!;
     });
-
+    
     services.AddTransient<BoilingDirectSolver>();
     services.AddTransient<LUSparseThroughProfileConversion>();
     
     services.AddTransient<ISLAESolver<SparseMatrix>, LocalOptimalScheme>();
+    // services.AddTransient<ISLAESolver<SparseMatrix>, LUSparseThroughProfileConversion>();
+
     services.AddTransient<LUPreconditioner>();
     services.AddTransient<SparsePartialLUResolver>();
 
@@ -83,27 +85,33 @@ void RunBoiling()
     var grid = new GridBuilder()
         .SetXAxis(new AxisSplitParameter(
             [0, r],
-            new UniformSplitter(4 * nestingDegree)
+            new UniformSplitter(80 * nestingDegree)
         ))
         .SetYAxis(new AxisSplitParameter(
             [0, h], 
-            new UniformSplitter(1 * nestingDegree)
+            new UniformSplitter(80 * nestingDegree)
         ))
         .SetMaterialSetterFactory(areas)
         .Build();
 
     var materialProvider = new BoilingMaterialProvider([
-        new BoilingMaterial(0.6, 999.97, 4187d)
+        new BoilingMaterial(0.6, 999.97, 4200d)
     ]);
 
     var solver = provider.GetRequiredService<BoilingDirectSolver>();
     solver.Allocate(grid);
     solver.Allocate(materialProvider);
-    solver.Allocate(new UniformSplitter(10 * nestingDegree)
-        .EnumerateValues(new Interval(0d, 600d))
+    solver.Allocate(new UniformSplitter(200 * nestingDegree)
+        .EnumerateValues(new Interval(0d, 360d))
         .ToArray());
 
-    var femSolution = solver.Solve(Vector.Create(grid.Nodes.TotalPoints, 20));
+    var femSolution = solver.Solve(Vector.Create(grid.Nodes.TotalPoints, 25));
+
+    for (var i = 0; i < grid.Nodes.TotalPoints; i++)
+    {
+        var u = femSolution.Calculate(grid.Nodes[i], 2);
+        Console.WriteLine($"{grid.Nodes[i].X:F5} {grid.Nodes[i].Y:F5} {u:E5}");
+    }
 }
 
 RunBoiling();

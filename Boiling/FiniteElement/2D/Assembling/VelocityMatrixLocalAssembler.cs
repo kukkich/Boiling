@@ -53,23 +53,24 @@ public class VelocityMatrixLocalAssembler : IMatrixStackLocalAssembler<Element>
         var derivativeByRFunctions = GetDerivativeByRFunctions(element);
         var derivativeByZFunctions = GetDerivativeByZFunctions(element);
 
-        var point = new Point();
+        
 
 	    for (var i = 0; i < element.NodeIndexes.Length; i++)
 	    {
-		    for (var j = 0; j <= i; j++)
-            {
-                matrix[i, j] = material.Cp * material.Rho * _doubleIntegration.Integrate(rInterval, zInterval, 
-                    (r, z) =>
-                    {
-                        point.X = r;
-                        point.Y = z;
-                        var velocity = _velocity.Get(point);
-                        return (velocity.R() * derivativeByRFunctions[i](z) + velocity.Z() * derivativeByZFunctions[i](r)) * 
-                               basisFunctions[j].Evaluate(point) * r;
-                    });
-				matrix[j, i] = matrix[i, j];
-            }
+		    for (var j = 0; j < element.NodeIndexes.Length; j++)
+		    {
+			    matrix[i, j] = -material.Cp * material.Rho * _doubleIntegration.Integrate(rInterval, zInterval,
+				    (r, z) =>
+				    {
+					    var point = new Point(r, z);
+					    // point.X = r;
+					    // point.Y = z;
+					    var velocity = _velocity.Get(point);
+					    return (velocity.R() * derivativeByRFunctions[i](z) +
+					            velocity.Z() * derivativeByZFunctions[i](r)) *
+					           basisFunctions[j].Evaluate(point) * r;
+				    });
+		    }
 	    }
     }
 
