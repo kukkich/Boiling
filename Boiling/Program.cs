@@ -62,8 +62,8 @@ void RunBoiling()
     logger.LogInformation("Boiling, You're just a miserable copy of me!");
     logger.LogCritical("No, I'm the upgrade!");
 
-    const double r = 2;
-    const double h = 2;
+    const double r = 0.08;
+    const double h = 0.09;
 
     var water = new RectArea(
         new Rectangle(
@@ -83,7 +83,7 @@ void RunBoiling()
     var grid = new GridBuilder()
         .SetXAxis(new AxisSplitParameter(
             [0, r],
-            new UniformSplitter(1 * nestingDegree)
+            new UniformSplitter(4 * nestingDegree)
         ))
         .SetYAxis(new AxisSplitParameter(
             [0, h], 
@@ -93,17 +93,17 @@ void RunBoiling()
         .Build();
 
     var materialProvider = new BoilingMaterialProvider([
-        new BoilingMaterial(1d, 1d, 1d)
+        new BoilingMaterial(0.6, 999.97, 4187d)
     ]);
 
     var solver = provider.GetRequiredService<BoilingDirectSolver>();
     solver.Allocate(grid);
     solver.Allocate(materialProvider);
-    solver.Allocate(new UniformSplitter(2 * nestingDegree)
-        .EnumerateValues(new Interval(0d, 2d))
+    solver.Allocate(new UniformSplitter(10 * nestingDegree)
+        .EnumerateValues(new Interval(0d, 600d))
         .ToArray());
 
-    var femSolution = solver.Solve(new Vector(new double[grid.Nodes.TotalPoints]));
+    var femSolution = solver.Solve(Vector.Create(grid.Nodes.TotalPoints, 20));
 }
 
 RunBoiling();

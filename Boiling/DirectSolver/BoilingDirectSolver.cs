@@ -20,6 +20,7 @@ using SharpMath.FiniteElement.Materials.Boiling;
 using SharpMath.FiniteElement.Providers.Density;
 using SharpMath.Geometry;
 using SharpMath.Geometry._2D;
+using SharpMath.Geometry._2D.Сylinder;
 using SharpMath.Matrices.Sparse;
 using SharpMath.Vectors;
 
@@ -105,19 +106,19 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
 
     private SecondCondition[] CreateSecond(Grid<Point, Element> grid)
     {
+        var panRadius = grid.Nodes[grid.Nodes.XLength - 1].R();
+        var theta = 1000 / (Math.PI * panRadius * panRadius);
         return EnumerateBottomElementsIndexes(grid)
-            .Select(elementIndex => new SecondCondition(elementIndex, Bound.Bottom, [1d, 1d], ComponentType.Real))
-            .Concat(EnumerateLeftElementsIndexes(grid)
-                .Select(elementIndex => new SecondCondition(elementIndex, Bound.Left, [1d, 1d], ComponentType.Real)))
+            .Select(elementIndex => new SecondCondition(elementIndex, Bound.Bottom, [theta, theta], ComponentType.Real))
             .ToArray();
     }
 
     private ThirdCondition[] CreateThird(Grid<Point, Element> grid)
     {
         return EnumerateRightElementsIndexes(grid)
-            .Select(elementIndex => new ThirdCondition(elementIndex, Bound.Right, [1d, 1d], 1d))
+            .Select(elementIndex => new ThirdCondition(elementIndex, Bound.Right, [24d, 24d], 200d))
             .Concat(EnumerateTopElementIndexes(grid)
-                .Select(elementIndex => new ThirdCondition(elementIndex, Bound.Top, [1d, 1d], 1d)))
+                .Select(elementIndex => new ThirdCondition(elementIndex, Bound.Top, [24d, 24d], 200d)))
             .ToArray();
     }
 
@@ -128,16 +129,6 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
         for (var i = 0; i < xAxisLength - 1; i++)
         {
             yield return i;
-        }
-    }
-
-    private static IEnumerable<int> EnumerateLeftElementsIndexes(Grid<Point, Element> grid)
-    {
-        var yAxisLength = grid.Nodes.YLength;
-
-        for (var i = 0; i < yAxisLength - 1; i++)
-        {
-            yield return i * (yAxisLength - 1);
         }
     }
 

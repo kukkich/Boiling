@@ -30,8 +30,8 @@ public class StiffnessMatrixLocalAssembler : IMatrixStackLocalAssembler<Element>
         var leftRCoordinate = _context.Grid.Nodes[element.NodeIndexes[0]].R();
 
         var stiffnessRTemplate = CylinderTemplateMatrices.StiffnessR1D(leftRCoordinate, element.Width);
-        var stiffnessZTemplate = CylinderTemplateMatrices.StiffnessZ1D(element.Width);
-        var massRTemplate = CylinderTemplateMatrices.MassR1D(leftRCoordinate, element.Length);
+        var stiffnessZTemplate = CylinderTemplateMatrices.StiffnessZ1D(element.Length);
+        var massRTemplate = CylinderTemplateMatrices.MassR1D(leftRCoordinate, element.Width);
         var massZTemplate = CylinderTemplateMatrices.MassZ1D(element.Length);
 
         for (var i = 0; i < element.NodeIndexes.Length; i++)
