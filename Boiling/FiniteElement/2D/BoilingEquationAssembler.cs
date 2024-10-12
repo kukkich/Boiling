@@ -22,7 +22,9 @@ public class BoilingEquationAssembler
     private readonly IMatrixStackLocalAssembler<Element> _localStiffnessMatrixAssembler;
     private readonly IMatrixStackLocalAssembler<Element> _localMassMatrixAssembler;
     private readonly IMatrixStackLocalAssembler<Element> _localVelocityMatrixAssembler;
+    private readonly IVectorStackLocalAssembler<Element> _rightPartAssembler;
     private readonly IStackInserter<SparseMatrix> _inserter;
+    private readonly IFirstBoundaryApplier<SparseMatrix> _firstBoundaryApplier;
     private readonly ISecondBoundaryApplier<SparseMatrix> _secondBoundaryApplier;
     private readonly IThirdBoundaryApplier<SparseMatrix> _thirdBoundaryApplier;
     private TwoLayerImplicitScheme _timeScheme;
@@ -32,7 +34,9 @@ public class BoilingEquationAssembler
         IMatrixStackLocalAssembler<Element> localStiffnessMatrixAssembler,
         IMatrixStackLocalAssembler<Element> localMassMatrixAssembler,
         IMatrixStackLocalAssembler<Element> localVelocityMatrixAssembler,
+        IVectorStackLocalAssembler<Element> rightPartAssembler,
         IStackInserter<SparseMatrix> inserter,
+        IFirstBoundaryApplier<SparseMatrix> firstBoundaryApplier,
         ISecondBoundaryApplier<SparseMatrix> secondBoundaryApplier,
         IThirdBoundaryApplier<SparseMatrix> thirdBoundaryApplier
     )
@@ -41,7 +45,9 @@ public class BoilingEquationAssembler
         _localStiffnessMatrixAssembler = localStiffnessMatrixAssembler;
         _localMassMatrixAssembler = localMassMatrixAssembler;
         _localVelocityMatrixAssembler = localVelocityMatrixAssembler;
+        _rightPartAssembler = rightPartAssembler;
         _inserter = inserter;
+        _firstBoundaryApplier = firstBoundaryApplier;
         _secondBoundaryApplier = secondBoundaryApplier;
         _thirdBoundaryApplier = thirdBoundaryApplier;
     }
@@ -77,7 +83,38 @@ public class BoilingEquationAssembler
             _timeScheme = new TwoLayerImplicitScheme(_context.StiffnessAndVelocityMatrix, _context.MassMatrix);
         }
 
-        _context.Equation = _timeScheme.UseScheme(previousSolution, currentTime, previousTime);
+        //var vectorIndexes = new StackIndexPermutation(stackalloc int[4]);
+
+        //Span<double> vector = stackalloc double[4];
+        //var j = 0;
+        //foreach (var element in _context.Grid.Elements)
+        //{
+        //    j++;
+            
+        //    var localVector = new StackLocalVector(vector, vectorIndexes);
+
+        //    if (j % 100 == 0)
+        //    {
+        //        Console.WriteLine(j);
+        //    }
+
+        //    _rightPartAssembler.AssembleVector(element, currentTime, vector, vectorIndexes);
+        //    _inserter.InsertVector(_context.RightPart, localVector);
+        //}
+
+        _context.Equation = _timeScheme.UseScheme(null, previousSolution, currentTime, previousTime);
+
+        return this;
+    }
+
+    public BoilingEquationAssembler ApplyFirstBoundary(Context<Point, Element, SparseMatrix> context)
+    {
+        var equation = context.Equation;
+
+        foreach (var condition in _context.FirstConditions)
+        {
+            _firstBoundaryApplier.Apply(equation, condition);
+        }
 
         return this;
     }

@@ -19,15 +19,16 @@ public class TwoLayerImplicitScheme
         _bufferVector = new Vector(new double[stiffnessAndVelocityMatrix.RowsCount]);
     }
 
-    public Equation<SparseMatrix> UseScheme(Vector previousSolution, double currentTime, double previousTime)
+    public Equation<SparseMatrix> UseScheme(Vector rightPart, Vector previousSolution, double currentTime, double previousTime)
     {
         _bufferVector.Nullify();
         var delta01 = currentTime - previousTime;
 
         LinAl.Multiply(1 / delta01, _massMatrix, _bufferMatrix);
         LinAl.Multiply(_bufferMatrix, previousSolution, _bufferVector);
+        //LinAl.Sum(rightPart, _bufferVector, _bufferVector);
         LinAl.Sum(_stiffnessAndVelocityMatrix, _bufferMatrix, _bufferMatrix);
 
-        return new Equation<SparseMatrix>(_bufferMatrix, new Vector(new double[_bufferVector.Length]), _bufferVector);
+        return new Equation<SparseMatrix>(_bufferMatrix, Vector.Create(_bufferVector.Length), _bufferVector);
     }
 }

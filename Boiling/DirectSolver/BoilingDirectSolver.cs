@@ -23,6 +23,7 @@ using SharpMath.Geometry._2D;
 using SharpMath.Geometry._2D.Сylinder;
 using SharpMath.Matrices.Sparse;
 using SharpMath.Vectors;
+using System.Linq;
 
 namespace Boiling.DirectSolver;
 
@@ -67,14 +68,14 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
 
         for (_currentTimeLayer = 1; _currentTimeLayer < _context.TimeLayers.Length; _currentTimeLayer++)
         {
+            //_context.FirstConditions = CreateFirst(_context.Grid);
             _assembler
                 .BuildEquation(PreviousSolution, CurrentTime, PreviousTime)
                 .ApplySecondBoundary(_context);
-     //           .ApplyThirdBoundary(_context);
 
-            _slaeSolver.Solve(_context.Equation);
+            _slaeSolver.Solve(_assembler.CurrentTimeLayerEquation);
 
-            _context.TimeSolutions[_currentTimeLayer] = _context.Equation.Solution;
+            _context.TimeSolutions[_currentTimeLayer] = _assembler.CurrentTimeLayerEquation.Solution;
         }
 
         return new TimeFiniteElementSolution2D(new BilinearBasisFunctionsProvider(_context), _context.Grid, _context.TimeSolutions, _context.TimeLayers);
@@ -97,6 +98,7 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
             ThirdConditions = CreateThird(grid),
             StiffnessAndVelocityMatrix = stiffnessAndVelocityMatrix,
             MassMatrix = massMatrix,
+            RightPart = Vector.Create(grid.Nodes.TotalPoints),
             TimeLayers = null,
             TimeSolutions = null,
         };
@@ -104,10 +106,60 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
         return context;
     }
 
+    private FirstCondition[] CreateFirst(Grid<Point, Element> grid)
+    {
+        var u = new Func<Point, double, double>((p, t) => p.R() + t);
+
+        return EnumerateBottomElementsIndexes(grid)
+            .SelectMany(elementIndex =>
+            {
+                var element = grid.Elements[elementIndex];
+                var nodeIndexes = element.GetBoundNodeIndexes(Bound.Bottom);
+                var conditionOne = new FirstCondition(nodeIndexes[0], u(grid.Nodes[nodeIndexes[0]], CurrentTime));
+                var conditionTwo = new FirstCondition(nodeIndexes[1], u(grid.Nodes[nodeIndexes[1]], CurrentTime));
+
+                return new[] { conditionOne, conditionTwo };
+            })
+            .Concat(EnumerateRightElementsIndexes(grid)
+                .SelectMany(elementIndex =>
+                {
+                    var element = grid.Elements[elementIndex];
+                    var nodeIndexes = element.GetBoundNodeIndexes(Bound.Right);
+                    var conditionOne = new FirstCondition(nodeIndexes[0], u(grid.Nodes[nodeIndexes[0]], CurrentTime));
+                    var conditionTwo = new FirstCondition(nodeIndexes[1], u(grid.Nodes[nodeIndexes[1]], CurrentTime));
+
+                    return new[] { conditionOne, conditionTwo };
+                })
+            )
+            .Concat(EnumerateTopElementIndexes(grid)
+                .SelectMany(elementIndex =>
+                {
+                    var element = grid.Elements[elementIndex];
+                    var nodeIndexes = element.GetBoundNodeIndexes(Bound.Top);
+                    var conditionOne = new FirstCondition(nodeIndexes[0], u(grid.Nodes[nodeIndexes[0]], CurrentTime));
+                    var conditionTwo = new FirstCondition(nodeIndexes[1], u(grid.Nodes[nodeIndexes[1]], CurrentTime));
+
+                    return new[] { conditionOne, conditionTwo };
+                })
+            )
+            .Concat(EnumerateLeftElementsIndexes(grid)
+                .SelectMany(elementIndex =>
+                {
+                    var element = grid.Elements[elementIndex];
+                    var nodeIndexes = element.GetBoundNodeIndexes(Bound.Left);
+                    var conditionOne = new FirstCondition(nodeIndexes[0], u(grid.Nodes[nodeIndexes[0]], CurrentTime));
+                    var conditionTwo = new FirstCondition(nodeIndexes[1], u(grid.Nodes[nodeIndexes[1]], CurrentTime));
+
+                    return new[] { conditionOne, conditionTwo };
+                })
+            )
+            .ToArray();
+    }
+
     private SecondCondition[] CreateSecond(Grid<Point, Element> grid)
     {
         var panRadius = grid.Nodes[grid.Nodes.XLength - 1].R();
-        var theta = 2000d / (Math.PI * panRadius * panRadius);
+        var theta = 1000d / (Math.PI * panRadius * panRadius);
         return EnumerateBottomElementsIndexes(grid)
             .Select(elementIndex => new SecondCondition(elementIndex, Bound.Bottom, [theta, theta], ComponentType.Real))
             .ToArray();
@@ -124,21 +176,32 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
 
     private static IEnumerable<int> EnumerateBottomElementsIndexes(Grid<Point, Element> grid)
     {
-        var xAxisLength = grid.Nodes.XLength;
+        var xAxisElements = grid.Nodes.XLength - 1;
 
-        for (var i = 0; i < xAxisLength - 1; i++)
+        for (var i = 0; i < xAxisElements; i++)
         {
             yield return i;
         }
     }
 
+    private static IEnumerable<int> EnumerateLeftElementsIndexes(Grid<Point, Element> grid)
+    {
+        var xAxisElements = grid.Nodes.XLength - 1;
+        var yAxisElements = grid.Nodes.YLength - 1;
+
+        for (var i = 0; i < yAxisElements; i++)
+        {
+            yield return i * xAxisElements;
+        }
+    }
+
     private static IEnumerable<int> EnumerateRightElementsIndexes(Grid<Point, Element> grid)
     {
-        var yAxisLength = grid.Nodes.YLength;
+        var yAxisElements = grid.Nodes.YLength - 1;
 
-        for (var i = 0; i < yAxisLength - 1; i++)
+        for (var i = 0; i < yAxisElements; i++)
         {
-            yield return (i + 1) * (yAxisLength - 1) - 1;
+            yield return (i + 1) * yAxisElements - 1;
         }
     }
 
@@ -164,11 +227,13 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
             new VelocityMatrixLocalAssembler(
                 context,
                 _materials,
-                new ConvectionVelocity(context.Grid.Nodes, 0.02),
+                new ConvectionVelocity(context.Grid.Nodes, 0.001),
                 new DoubleIntegration(GaussMethodConfig.UseGaussMethodTwo(1)),
                 new BilinearBasisFunctionsProvider(context)
             ),
+            new RightPartAssembler(context),
             inserter,
+            new GaussExcluderSparse(),
             new CylinderSecondBoundaryApplier(context, inserter),
             new CylinderThirdBoundaryApplier(context, inserter)
         );

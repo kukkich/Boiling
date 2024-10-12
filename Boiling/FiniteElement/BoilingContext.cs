@@ -17,5 +17,6 @@ public class BoilingContext<TPoint, TElement, TMatrix> : Context<TPoint, TElemen
     public required double[] TimeLayers { get; set; }
     public required SparseMatrix StiffnessAndVelocityMatrix { get; set; }
     public required SparseMatrix MassMatrix { get; set; }
+    public required Vector RightPart { get; set; }
     public required Vector[] TimeSolutions { get; set; }
 }
