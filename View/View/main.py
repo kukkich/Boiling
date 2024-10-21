@@ -40,13 +40,16 @@ def plot_temperature_field(x, y, T):
 
     # Интерполяция данных температуры на регулярную сетку
     # method = linear, cubic
-    grid_T = griddata((x, y), T, (grid_x, grid_y), method='cubic')
+    grid_T = griddata((x, y), T, (grid_x, grid_y), method='nearest')
+
+    # Ограничение интерполированных значений температуры в диапазоне от 0 до 500 градусов
+    grid_T = np.clip(grid_T, 0, 300)
 
     # Построение графика
     plt.figure(figsize=(8, 6))
     plt.contourf(grid_x, grid_y, grid_T, levels=100, cmap='coolwarm')
     plt.colorbar(label='Temperature')
-    plt.scatter(x, y, c=T, cmap='coolwarm', edgecolors='black', s=50)  # точки измерений
+    # plt.scatter(x, y, c=T, cmap='coolwarm', edgecolors='black', s=50)  # точки измерений
     plt.xlabel('X Coordinate')
     plt.ylabel('Y Coordinate')
     plt.title('Temperature Field')
@@ -54,7 +57,7 @@ def plot_temperature_field(x, y, T):
 
 
 # Основная программа
-file_path = 'data.txt'  # Укажите путь к вашему файлу
+file_path = 'data500.txt'  # Укажите путь к вашему файлу
 decimal_separator = ','  # Укажите разделитель для чисел, например ',' или '.'
 
 # Чтение данных из файла
