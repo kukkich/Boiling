@@ -59,16 +59,9 @@ public class BoilingEquationAssembler
             var matrix = new StackMatrix(stackalloc double[4 * 4], 4);
             var indexes = new StackIndexPermutation(stackalloc int[4]);
 
-            var i = 0;
             foreach (var element in _context.Grid.Elements)
             {
-                i++;
                 var localMatrix = new StackLocalMatrix(matrix, indexes);
-
-                if (i % 100 == 0)
-                {
-                    Console.WriteLine(i);
-                }
                 
                 _localStiffnessMatrixAssembler.AssembleMatrix(element, matrix, indexes);
                 _inserter.InsertMatrix(_context.StiffnessAndVelocityMatrix, localMatrix);

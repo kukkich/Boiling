@@ -76,6 +76,10 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
             _slaeSolver.Solve(_assembler.CurrentTimeLayerEquation);
 
             _context.TimeSolutions[_currentTimeLayer] = _assembler.CurrentTimeLayerEquation.Solution;
+            if (_currentTimeLayer > 1) 
+                _context.TimeSolutions[_currentTimeLayer - 2] = null;
+
+            Console.Write($"{_currentTimeLayer}\r");
         }
 
         return new TimeFiniteElementSolution2D(new BilinearBasisFunctionsProvider(_context), _context.Grid, _context.TimeSolutions, _context.TimeLayers);
@@ -158,7 +162,7 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
 
     private SecondCondition[] CreateSecond(Grid<Point, Element> grid)
     {
-        var panRadius = grid.Nodes[grid.Nodes.XLength - 1].R();
+        var panRadius = grid.Nodes[grid.Nodes.TotalPoints - 1].R();
         var theta = 1000d / (Math.PI * panRadius * panRadius);
         return EnumerateBottomElementsIndexes(grid)
             .Select(elementIndex => new SecondCondition(elementIndex, Bound.Bottom, [theta, theta], ComponentType.Real))
@@ -227,8 +231,8 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
             new VelocityMatrixLocalAssembler(
                 context,
                 _materials,
-                new ConvectionVelocity(context.Grid.Nodes, 0.001),
-                new DoubleIntegration(GaussMethodConfig.UseGaussMethodTwo(1)),
+                new ConvectionVelocity(context.Grid.Nodes, 0.25),
+                new DoubleIntegration(GaussMethodConfig.UseGaussMethodTwo(128)),
                 new BilinearBasisFunctionsProvider(context)
             ),
             new RightPartAssembler(context),

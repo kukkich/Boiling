@@ -50,7 +50,7 @@ public class TimeFiniteElementSolution2D
         var polynomials = new Func<double, double>[]
         {
             t => (t - currentTime) / (previousTime - currentTime),
-            t => (t - previousTime) / (currentTime - previousTime)
+            t => (t - previousTime) / (currentTime - previousTime),
         };
 
         return polynomials;
@@ -67,6 +67,6 @@ public class TimeFiniteElementSolution2D
 
     private int FindCurrentTimeLayer(double time)
     {
-        return Array.FindIndex(_timeLayers, x => time <= x);
+        return Array.FindIndex(_timeLayers, x => Math.Abs(time - x) <= 1e-15 || time <= x);
     }
 }

@@ -80,16 +80,16 @@ void RunBoiling()
         defaultMaterialIdId: 0
     );
 
-    const int nestingDegree = 1;
+    const int nestingDegree = 32;
     
     var grid = new GridBuilder()
         .SetXAxis(new AxisSplitParameter(
             [0, r],
-            new UniformSplitter(80 * nestingDegree)
+            new UniformSplitter(80)
         ))
         .SetYAxis(new AxisSplitParameter(
             [0, h], 
-            new UniformSplitter(90 * nestingDegree)
+            new UniformSplitter(90)
         ))
         .SetMaterialSetterFactory(areas)
         .Build();
@@ -101,15 +101,15 @@ void RunBoiling()
     var solver = provider.GetRequiredService<BoilingDirectSolver>();
     solver.Allocate(grid);
     solver.Allocate(materialProvider);
-    solver.Allocate(new UniformSplitter(20000 * nestingDegree)
-        .EnumerateValues(new Interval(0d, 200d))
+    solver.Allocate(new UniformSplitter(1 * nestingDegree)
+        .EnumerateValues(new Interval(0d, 1d))
         .ToArray());
 
     var femSolution = solver.Solve(Vector.Create(grid.Nodes.TotalPoints, 25));
 
     for (var i = 0; i < grid.Nodes.TotalPoints; i++)
     {
-        var u = femSolution.Calculate(grid.Nodes[i], 100d);
+        var u = femSolution.Calculate(grid.Nodes[i], 1d);
         Console.WriteLine($"{grid.Nodes[i].X:F5} {grid.Nodes[i].Y:F5} {u:E5}");
     }
 }
