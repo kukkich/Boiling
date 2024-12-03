@@ -94,6 +94,13 @@ void RunBoiling()
         .SetMaterialSetterFactory(areas)
         .Build();
 
+    var velocityParameter = new ConvectionVelocity(grid.Nodes, 0.001);
+    for (var i = 0; i < grid.Nodes.TotalPoints; i++)
+    {
+        var velocity = velocityParameter.Get(grid.Nodes[i]);
+        Console.WriteLine($"{grid.Nodes[i].X:F5} {grid.Nodes[i].Y:F5} {velocity.X:E5} {velocity.Y:E5}");
+    }
+    
     var materialProvider = new BoilingMaterialProvider([
         new BoilingMaterial(0.6, 999.97, 4200d)
     ]);
