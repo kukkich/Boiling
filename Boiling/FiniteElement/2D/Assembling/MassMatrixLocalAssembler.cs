@@ -30,8 +30,8 @@ public class MassMatrixLocalAssembler : IMatrixStackLocalAssembler<Element>
 
         var leftRCoordinate = _context.Grid.Nodes[element.NodeIndexes[0]].R();
 
-        var massRTemplate = CylinderTemplateMatrices.MassR1D(leftRCoordinate, element.Width);
-        var massZTemplate = CylinderTemplateMatrices.MassZ1D(element.Length);
+        var massRTemplate = CylinderTemplateMatrices.MassR1D(leftRCoordinate, element.Length);
+        var massZTemplate = CylinderTemplateMatrices.MassZ1D(element.Width);
 
         for (var i = 0; i < element.NodeIndexes.Length; i++)
         {
