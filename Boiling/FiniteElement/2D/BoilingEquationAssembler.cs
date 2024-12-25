@@ -76,26 +76,19 @@ public class BoilingEquationAssembler
             _timeScheme = new TwoLayerImplicitScheme(_context.StiffnessAndVelocityMatrix, _context.MassMatrix);
         }
 
-        //var vectorIndexes = new StackIndexPermutation(stackalloc int[4]);
+        var vectorIndexes = new StackIndexPermutation(stackalloc int[4]);
 
-        //Span<double> vector = stackalloc double[4];
-        //var j = 0;
-        //foreach (var element in _context.Grid.Elements)
-        //{
-        //    j++;
-            
-        //    var localVector = new StackLocalVector(vector, vectorIndexes);
+        Span<double> vector = stackalloc double[4];
 
-        //    if (j % 100 == 0)
-        //    {
-        //        Console.WriteLine(j);
-        //    }
+        foreach (var element in _context.Grid.Elements)
+        {
+            var localVector = new StackLocalVector(vector, vectorIndexes);
 
-        //    _rightPartAssembler.AssembleVector(element, currentTime, vector, vectorIndexes);
-        //    _inserter.InsertVector(_context.RightPart, localVector);
-        //}
+            _rightPartAssembler.AssembleVector(element, currentTime, vector, vectorIndexes);
+            _inserter.InsertVector(_context.RightPart, localVector);
+        }
 
-        _context.Equation = _timeScheme.UseScheme(null, previousSolution, currentTime, previousTime);
+        _context.Equation = _timeScheme.UseScheme(_context.RightPart, previousSolution, currentTime, previousTime);
 
         return this;
     }

@@ -2,6 +2,7 @@
 using SharpMath;
 using SharpMath.FiniteElement;
 using SharpMath.FiniteElement._2D;
+using SharpMath.FiniteElement._2D.Parameters;
 using SharpMath.FiniteElement.Core.Assembling;
 using SharpMath.FiniteElement.Core.Assembling.Params;
 using SharpMath.FiniteElement.Core.Assembling.TemplateMatrices;
@@ -18,10 +19,12 @@ public class RightPartAssembler : IVectorStackLocalAssembler<Element>
 {
     private readonly Context<Point, Element, SparseMatrix> _context;
     private readonly Matrix _matrix = new(new double[4, 4]);
+    private readonly ConvectionVelocity _velocity;
 
-    public RightPartAssembler(Context<Point, Element, SparseMatrix> context)
+    public RightPartAssembler(Context<Point, Element, SparseMatrix> context, ConvectionVelocity velocity)
     {
         _context = context;
+        _velocity = velocity;
     }
 
     public void AssembleVector(Element element, Span<double> vector, StackIndexPermutation indexes)
@@ -33,8 +36,8 @@ public class RightPartAssembler : IVectorStackLocalAssembler<Element>
     {
         var leftRCoordinate = _context.Grid.Nodes[element.NodeIndexes[0]].R();
 
-        var massRTemplate = CylinderTemplateMatrices.MassR1D(leftRCoordinate, element.Width);
-        var massZTemplate = CylinderTemplateMatrices.MassZ1D(element.Length);
+        var massRTemplate = CylinderTemplateMatrices.MassR1D(leftRCoordinate, element.Length);
+        var massZTemplate = CylinderTemplateMatrices.MassZ1D(element.Width);
 
         for (var i = 0; i < element.NodeIndexes.Length; i++)
         {
@@ -45,13 +48,13 @@ public class RightPartAssembler : IVectorStackLocalAssembler<Element>
             }
         }
 
-        var densityFunction = new Func<Point, double, double>((p, t) => -1 / p.R() + 1);
+        var densityFunction = new Func<Point, double, double>((p, t) => -4 + 1);
 
         Span<double> densityFunctionValues = stackalloc double[element.NodeIndexes.Length];
 
         for (var i = 0; i < densityFunctionValues.Length; i++)
         {
-            densityFunctionValues[i] = densityFunction(_context.Grid.Nodes[element.NodeIndexes[i]], time);
+            densityFunctionValues[i] = densityFunction(_context.Grid.Nodes[element.NodeIndexes[i]], time) - _velocity.Get(_context.Grid.Nodes[element.NodeIndexes[i]]) * new Point(2 * _context.Grid.Nodes[element.NodeIndexes[i]].R(), 1d);
             vector[i] = 0;
         }
 

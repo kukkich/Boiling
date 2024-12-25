@@ -26,7 +26,7 @@ public class TwoLayerImplicitScheme
 
         LinAl.Multiply(1 / delta01, _massMatrix, _bufferMatrix);
         LinAl.Multiply(_bufferMatrix, previousSolution, _bufferVector);
-        //LinAl.Sum(rightPart, _bufferVector, _bufferVector);
+        LinAl.Sum(rightPart, _bufferVector, _bufferVector);
         LinAl.Sum(_stiffnessAndVelocityMatrix, _bufferMatrix, _bufferMatrix);
 
         return new Equation<SparseMatrix>(_bufferMatrix, Vector.Create(_bufferVector.Length), _bufferVector);

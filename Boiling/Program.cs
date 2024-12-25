@@ -14,6 +14,7 @@ using SharpMath.FiniteElement.Materials.MaterialSetter.Areas;
 using SharpMath.FiniteElement.Materials.Providers;
 using SharpMath.Geometry;
 using SharpMath.Geometry._2D;
+using SharpMath.Geometry._2D.Сylinder;
 using SharpMath.Geometry.Splitting;
 using SharpMath.Matrices.Sparse;
 using SharpMath.Vectors;
@@ -64,12 +65,12 @@ void RunBoiling()
     logger.LogInformation("Boiling, You're just a miserable copy of me!");
     logger.LogCritical("No, I'm the upgrade!");
 
-    const double r = 0.08;
-    const double h = 0.09;
+    const double r = 5;
+    const double h = 6;
 
     var water = new RectArea(
         new Rectangle(
-            0, 0,
+            1, 0,
             r, h
         ),
         materialId: 0
@@ -80,45 +81,90 @@ void RunBoiling()
         defaultMaterialIdId: 0
     );
 
-    const int nestingDegree = 32;
+    var nestingDegree = 1;
     
     var grid = new GridBuilder()
         .SetXAxis(new AxisSplitParameter(
-            [0, r],
-            new UniformSplitter(80)
+            [1, r],
+            new UniformSplitter(2)
         ))
         .SetYAxis(new AxisSplitParameter(
             [0, h], 
-            new UniformSplitter(90)
+            new UniformSplitter(2)
         ))
         .SetMaterialSetterFactory(areas)
         .Build();
 
-    var velocityParameter = new ConvectionVelocity(grid.Nodes, 0.001);
-    for (var i = 0; i < grid.Nodes.TotalPoints; i++)
-    {
-        var velocity = velocityParameter.Get(grid.Nodes[i]);
-        Console.WriteLine($"{grid.Nodes[i].X:F5} {grid.Nodes[i].Y:F5} {velocity.X:E5} {velocity.Y:E5}");
-    }
+    //var velocityParameter = new ConvectionVelocity(grid.Nodes, 0.001);
+    //for (var i = 0; i < grid.Nodes.TotalPoints; i++)
+    //{
+    //    var velocity = velocityParameter.Get(grid.Nodes[i]);
+    //    Console.WriteLine($"{grid.Nodes[i].X:F5} {grid.Nodes[i].Y:F5} {velocity.X:E5} {velocity.Y:E5}");
+    //}
     
     var materialProvider = new BoilingMaterialProvider([
-        new BoilingMaterial(0.6, 999.97, 4200d)
+        new BoilingMaterial(1, 1, 1d)
+        //new BoilingMaterial(0.6, 999.97, 4200d)
     ]);
 
     var solver = provider.GetRequiredService<BoilingDirectSolver>();
     solver.Allocate(grid);
     solver.Allocate(materialProvider);
-    solver.Allocate(new UniformSplitter(1 * nestingDegree)
-        .EnumerateValues(new Interval(0d, 1d))
+    solver.Allocate(new UniformSplitter(50 * nestingDegree)
+        .EnumerateValues(new Interval(0d, 50))
         .ToArray());
 
-    var femSolution = solver.Solve(Vector.Create(grid.Nodes.TotalPoints, 25));
+    var tempValues = new double[grid.Nodes.TotalPoints];
 
-    for (var i = 0; i < grid.Nodes.TotalPoints; i++)
+    var u = new Func<Point, double, double>((p, t) => p.R() * p.R() + p.Z() + t);
+
+    for (int i = 0; i < tempValues.Length; i++)
     {
-        var u = femSolution.Calculate(grid.Nodes[i], 1d);
-        Console.WriteLine($"{grid.Nodes[i].X:F5} {grid.Nodes[i].Y:F5} {u:E5}");
+        tempValues[i] = u(grid.Nodes[i], 0);
     }
+
+    var femSolution = solver.Solve(new Vector(tempValues));
+
+    var outputGrid = new GridBuilder()
+        .SetXAxis(new AxisSplitParameter(
+            [0, r],
+            new UniformSplitter(85)
+        ))
+        .SetYAxis(new AxisSplitParameter(
+            [0, h], 
+            new UniformSplitter(140)
+        ))
+        .SetMaterialSetterFactory(areas)
+        .Build();
+
+    var values = new double[outputGrid.Nodes.TotalPoints];
+
+    //for (var i = 0; i < outputGrid.Nodes.TotalPoints; i++)
+    //{
+    //    values[i] = femSolution.Calculate(outputGrid.Nodes[i], 100);
+    //    Console.WriteLine($"{outputGrid.Nodes[i].X:F5} {outputGrid.Nodes[i].Y:F5} {values[i]:E5}");
+    //}
+
+    //var values = new double[grid.Nodes.TotalPoints];
+
+    //for (var i = 0; i < grid.Nodes.TotalPoints; i++)
+    //{
+    //    values[i] = femSolution.Calculate(grid.Nodes[i], 1d);
+    //    Console.WriteLine($"{grid.Nodes[i].X:F5} {grid.Nodes[i].Y:F5} {values[i]:E5}");
+    //}
+
+    var filePath = "output.txt";
+
+    using (var writer = new StreamWriter(filePath))
+    {
+        for (var i = 0; i < outputGrid.Nodes.TotalPoints; i++)
+        {
+            values[i] = femSolution.Calculate(outputGrid.Nodes[i], 50d);
+            writer.WriteLine($"{outputGrid.Nodes[i].X:F5} {outputGrid.Nodes[i].Y:F5} {values[i]:E5}");
+        }
+    }
+
+    //Console.WriteLine(values.Any(v => v < 0));
 }
 
 RunBoiling();

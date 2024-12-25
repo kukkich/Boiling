@@ -68,10 +68,12 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
 
         for (_currentTimeLayer = 1; _currentTimeLayer < _context.TimeLayers.Length; _currentTimeLayer++)
         {
-            //_context.FirstConditions = CreateFirst(_context.Grid);
+            _context.FirstConditions = CreateFirst(_context.Grid);
             _assembler
                 .BuildEquation(PreviousSolution, CurrentTime, PreviousTime)
-                .ApplySecondBoundary(_context);
+                .ApplyFirstBoundary(_context);
+                //.ApplySecondBoundary(_context);
+                //.ApplyThirdBoundary(_context);
 
             _slaeSolver.Solve(_assembler.CurrentTimeLayerEquation);
 
@@ -112,7 +114,7 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
 
     private FirstCondition[] CreateFirst(Grid<Point, Element> grid)
     {
-        var u = new Func<Point, double, double>((p, t) => p.R() + t);
+        var u = new Func<Point, double, double>((p, t) => p.R() * p.R() + p.Z() + t);
 
         return EnumerateBottomElementsIndexes(grid)
             .SelectMany(elementIndex =>
@@ -172,9 +174,9 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
     private ThirdCondition[] CreateThird(Grid<Point, Element> grid)
     {
         return EnumerateRightElementsIndexes(grid)
-            .Select(elementIndex => new ThirdCondition(elementIndex, Bound.Right, [24d, 24d], 200d))
+            .Select(elementIndex => new ThirdCondition(elementIndex, Bound.Right, [25d, 25d], 400d))
             .Concat(EnumerateTopElementIndexes(grid)
-                .Select(elementIndex => new ThirdCondition(elementIndex, Bound.Top, [24d, 24d], 200d)))
+                .Select(elementIndex => new ThirdCondition(elementIndex, Bound.Top, [25d, 25d], 400d)))
             .ToArray();
     }
 
@@ -201,11 +203,12 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
 
     private static IEnumerable<int> EnumerateRightElementsIndexes(Grid<Point, Element> grid)
     {
+        var xAxisElements = grid.Nodes.XLength - 1;
         var yAxisElements = grid.Nodes.YLength - 1;
 
         for (var i = 0; i < yAxisElements; i++)
         {
-            yield return (i + 1) * yAxisElements - 1;
+            yield return (i + 1) * xAxisElements - 1;
         }
     }
 
@@ -231,11 +234,11 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
             new VelocityMatrixLocalAssembler(
                 context,
                 _materials,
-                new ConvectionVelocity(context.Grid.Nodes, 0.25),
-                new DoubleIntegration(GaussMethodConfig.UseGaussMethodTwo(128)),
+                new ConvectionVelocity(context.Grid.Nodes, 0.01),
+                new DoubleIntegration(GaussMethodConfig.UseGaussMethodTwo(1)),
                 new BilinearBasisFunctionsProvider(context)
             ),
-            new RightPartAssembler(context),
+            new RightPartAssembler(context, new ConvectionVelocity(context.Grid.Nodes, 0.01)),
             inserter,
             new GaussExcluderSparse(),
             new CylinderSecondBoundaryApplier(context, inserter),
