@@ -65,9 +65,9 @@ public class VelocityMatrixLocalAssembler : IMatrixStackLocalAssembler<Element>
 					    point.X = r;
 					    point.Y = z;
 					    var velocity = _velocity.Get(point);
-					    return (velocity.R() * derivativeByRFunctions[i](z) +
-					            velocity.Z() * derivativeByZFunctions[i](r)) *
-					           basisFunctions[j].Evaluate(point) * r;
+					    return (velocity.R() * derivativeByRFunctions[j](z) +
+					            velocity.Z() * derivativeByZFunctions[j](r)) *
+					           basisFunctions[i].Evaluate(point) * r;
 				    });
 		    }
 	    }

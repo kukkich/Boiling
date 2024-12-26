@@ -231,8 +231,8 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
             new VelocityMatrixLocalAssembler(
                 context,
                 _materials,
-                new ConvectionVelocity(context.Grid.Nodes, 0.25),
-                new DoubleIntegration(GaussMethodConfig.UseGaussMethodTwo(128)),
+                new ConvectionVelocity(context.Grid.Nodes, 0.1),
+                new DoubleIntegration(GaussMethodConfig.UseGaussMethodTwo(1)),
                 new BilinearBasisFunctionsProvider(context)
             ),
             new RightPartAssembler(context),
