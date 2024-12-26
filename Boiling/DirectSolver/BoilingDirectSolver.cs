@@ -71,8 +71,8 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
             _context.FirstConditions = CreateFirst(_context.Grid);
             _assembler
                 .BuildEquation(PreviousSolution, CurrentTime, PreviousTime)
+                //.ApplySecondBoundary(_context)
                 .ApplyFirstBoundary(_context);
-                //.ApplySecondBoundary(_context);
                 //.ApplyThirdBoundary(_context);
 
             _slaeSolver.Solve(_assembler.CurrentTimeLayerEquation);
@@ -116,17 +116,7 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
     {
         var u = new Func<Point, double, double>((p, t) => p.R() * p.R() + p.Z() + t);
 
-        return EnumerateBottomElementsIndexes(grid)
-            .SelectMany(elementIndex =>
-            {
-                var element = grid.Elements[elementIndex];
-                var nodeIndexes = element.GetBoundNodeIndexes(Bound.Bottom);
-                var conditionOne = new FirstCondition(nodeIndexes[0], u(grid.Nodes[nodeIndexes[0]], CurrentTime));
-                var conditionTwo = new FirstCondition(nodeIndexes[1], u(grid.Nodes[nodeIndexes[1]], CurrentTime));
-
-                return new[] { conditionOne, conditionTwo };
-            })
-            .Concat(EnumerateRightElementsIndexes(grid)
+        return EnumerateRightElementsIndexes(grid)
                 .SelectMany(elementIndex =>
                 {
                     var element = grid.Elements[elementIndex];
@@ -136,7 +126,7 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
 
                     return new[] { conditionOne, conditionTwo };
                 })
-            )
+            
             .Concat(EnumerateTopElementIndexes(grid)
                 .SelectMany(elementIndex =>
                 {
@@ -165,7 +155,8 @@ public class BoilingDirectSolver : IAllocationRequired<Grid<Point, Element>>, IA
     private SecondCondition[] CreateSecond(Grid<Point, Element> grid)
     {
         var panRadius = grid.Nodes[grid.Nodes.TotalPoints - 1].R();
-        var theta = 1000d / (Math.PI * panRadius * panRadius);
+        //var theta = 1000d / (Math.PI * panRadius * panRadius);
+        var theta = -1;
         return EnumerateBottomElementsIndexes(grid)
             .Select(elementIndex => new SecondCondition(elementIndex, Bound.Bottom, [theta, theta], ComponentType.Real))
             .ToArray();

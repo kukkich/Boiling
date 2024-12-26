@@ -76,6 +76,7 @@ public class BoilingEquationAssembler
             _timeScheme = new TwoLayerImplicitScheme(_context.StiffnessAndVelocityMatrix, _context.MassMatrix);
         }
 
+        _context.RightPart.Nullify();
         var vectorIndexes = new StackIndexPermutation(stackalloc int[4]);
 
         Span<double> vector = stackalloc double[4];
